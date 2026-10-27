@@ -1,0 +1,100 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://example.invalid/fakepii-docs/truth.schema.json",
+  "title": "fakepii-docs ground truth",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema_version", "generator", "seed", "document", "matching", "entities", "pii", "near_misses"],
+  "properties": {
+    "schema_version": {"const": "1.0"},
+    "generator": {
+      "type": "object",
+      "required": ["name", "version"],
+      "properties": {"name": {"type": "string"}, "version": {"type": "string"}}
+    },
+    "seed": {"type": "integer"},
+    "document": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["file", "format", "sha256"],
+      "properties": {
+        "file": {"type": "string"},
+        "format": {"enum": ["docx", "xlsx", "pptx", "pdf", "pdf-image", "csv", "txt", "md"]},
+        "sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"}
+      }
+    },
+    "matching": {
+      "type": "object",
+      "required": ["whitespace", "zero_width", "case_insensitive_types"],
+      "properties": {
+        "whitespace": {"type": "string"},
+        "zero_width": {"type": "string"},
+        "case_insensitive_types": {"type": "array", "items": {"type": "string"}}
+      }
+    },
+    "entities": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["id", "kind", "display"],
+        "properties": {
+          "id": {"type": "string"},
+          "kind": {"const": "person"},
+          "display": {"type": "string"}
+        }
+      }
+    },
+    "pii": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["id", "type", "value", "entity", "locations"],
+        "properties": {
+          "id": {"type": "string", "pattern": "^pii-[0-9]{3,}$"},
+          "type": {"enum": ["person_name", "first_name", "last_name", "email", "phone", "national_id",
+                             "street_address", "postal_address", "date_of_birth", "username"]},
+          "value": {"type": "string", "minLength": 1},
+          "entity": {"type": "string"},
+          "locations": {"type": "array", "minItems": 1, "items": {"$ref": "#/$defs/location"}}
+        }
+      }
+    },
+    "near_misses": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["id", "kind", "value", "context", "label", "locations"],
+        "properties": {
+          "id": {"type": "string", "pattern": "^nm-[0-9]{3,}$"},
+          "kind": {"type": "string"},
+          "value": {"type": "string", "minLength": 1},
+          "context": {"type": "string", "minLength": 1},
+          "label": {"type": "string", "minLength": 1},
+          "locations": {"type": "array", "minItems": 1, "items": {"$ref": "#/$defs/location"}}
+        }
+      }
+    }
+  },
+  "$defs": {
+    "location": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["part", "path", "count", "visible", "techniques"],
+      "properties": {
+        "part": {"type": "string", "description": "Package part / container (zip member, PDF page, 'info', ...)."},
+        "path": {"type": "string", "description": "Position inside the part, in the extractor's location grammar."},
+        "count": {"type": "integer", "minimum": 1},
+        "visible": {"type": "boolean"},
+        "techniques": {"type": "array", "items": {"type": "string"}},
+        "bboxes": {
+          "type": "array",
+          "description": "pdf-image only: [x0, top, x1, bottom] in PDF points, origin top-left.",
+          "items": {"type": "array", "items": {"type": "number"}, "minItems": 4, "maxItems": 4}
+        }
+      }
+    }
+  }
+}
